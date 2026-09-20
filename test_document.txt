@@ -1,0 +1,4 @@
+Project Helix is an advanced deep learning framework designed by the Antigravity research group.
+It has three main layers: the core quantum-tensor parser, the multi-agent orchestration layer, and the visual rendering compiler.
+The primary developer of Project Helix is a robotic assistant named HelixBot, who was activated in August 2026.
+It is built specifically to address high-dimensional vector modeling.

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise RAG Chatbot</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon"><i class="fa-solid fa-brain-circuit"></i></span>
+                    <h1>RAG Chatbot</h1>
+                </div>
+                <button id="settings-btn" class="icon-btn" title="API Key Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="sidebar-section">
+                <h3 class="section-title"><i class="fa-solid fa-file-arrow-up"></i> Ingest Documents</h3>
+                <div id="dropzone" class="dropzone">
+                    <input type="file" id="file-input" multiple accept=".pdf,.txt,.md" style="display: none;">
+                    <div class="dropzone-content">
+                        <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                        <p class="drop-text">Drag & drop documents here</p>
+                        <span class="drop-subtext">Supports PDF, TXT, MD</span>
+                        <button id="browse-btn" class="btn btn-secondary btn-sm">Browse Files</button>
+                    </div>
+                </div>
+                <div id="upload-status" class="upload-status hidden">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                        <span id="upload-status-text">Uploading & embedding...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Inventory -->
+            <div class="sidebar-section flex-grow">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fa-solid fa-database"></i> Knowledge Base</h3>
+                    <button id="clear-db-btn" class="text-btn text-danger hidden" title="Clear all files">
+                        <i class="fa-solid fa-trash-can"></i> Clear All
+                    </button>
+                </div>
+                <div id="documents-list" class="documents-list">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <p>No documents ingested yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer / Status -->
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span id="key-status-dot" class="dot dot-danger"></span>
+                    <span id="key-status-text">Gemini API Key Missing</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Workspace -->
+        <main class="chat-container">
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <div class="header-info">
+                    <h2>Chat Assistant</h2>
+                    <span id="coverage-badge" class="badge">0 documents active</span>
+                </div>
+                <button id="clear-chat-btn" class="btn btn-tertiary" title="Clear Chat History">
+                    <i class="fa-solid fa-eraser"></i> Clear Conversation
+                </button>
+            </header>
+
+            <!-- Message Area -->
+            <div id="chat-messages" class="chat-messages">
+                <!-- Welcome Message -->
+                <div class="welcome-box">
+                    <div class="welcome-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <h2>Welcome to RAG Chatbot</h2>
+                    <p>An intelligent retrieval-augmented assistant. Upload documents in the sidebar, and I will search through them to answer your questions with precise citations.</p>
+                    <div class="welcome-steps">
+                        <div class="step">
+                            <span class="step-num">1</span>
+                            <p>Configure your <strong>Gemini API Key</strong> in settings <i class="fa-solid fa-gear"></i></p>
+                        </div>
+                        <div class="step">
+                            <span class="step-num">2</span>
+                            <p>Drag and drop <strong>PDF, TXT, or MD</strong> files to ingest</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-num">3</span>
+                            <p>Ask questions and view <strong>grounded sources</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input Panel -->
+            <div class="input-panel">
+                <div id="typing-indicator" class="typing-indicator hidden">
+                    <div class="dot-bounce"></div>
+                    <div class="dot-bounce"></div>
+                    <div class="dot-bounce"></div>
+                    <span>RAG Chatbot is analyzing contexts and generating answer...</span>
+                </div>
+
+                <div class="input-container-glass">
+                    <textarea id="chat-input" placeholder="Ask a question about your documents..." rows="1"></textarea>
+                    <div class="input-actions">
+                        <span class="char-counter"><span id="char-count">0</span> / 2000</span>
+                        <button id="send-btn" class="btn btn-primary" disabled>
+                            <span>Send</span>
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-key"></i> Gemini Configuration</h3>
+                <button id="close-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">To use embeddings and chat capabilities, provide a Google Gemini API Key. The key is stored locally in your browser and never shared elsewhere.</p>
+                <div class="form-group">
+                    <label for="api-key-input">Gemini API Key</label>
+                    <div class="input-password-wrapper">
+                        <input type="password" id="api-key-input" placeholder="AIzaSy...">
+                        <button id="toggle-key-visibility" class="visibility-btn" type="button">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint">Get an API key from the <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>.</small>
+                </div>
+                <div id="modal-status" class="modal-status hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-settings-btn" class="btn btn-secondary">Cancel</button>
+                <button id="save-settings-btn" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
