@@ -1,22 +1,47 @@
-# Virtual environment
+# ==========================================
+# Atlas RAG - Git Ignore Configuration
+# ==========================================
+
+# Virtual environments
 .venv/
 venv/
 ENV/
+env/
 
-# Python cache
+# Python cache and bytecode
 __pycache__/
 pycache/
 *.py[cod]
 *$py.class
+backend/__pycache__/
+*/__pycache__/
 
-# Database / Vector store
+# ChromaDB vector store (runtime embeddings)
 chroma_db/
+backend/chroma_db/
 
-# Environment variables
+# Uploaded documents and runtime cache
+backend/document_store/files/*
+!backend/document_store/files/.gitkeep
+backend/document_store/parsed/*
+!backend/document_store/parsed/.gitkeep
+
+# Frontend build and dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/.turbo/
+
+# Environment variables & secrets
 .env
-.env.*
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
 
-# IDE / OS files
+# IDE, OS, and editor files
 .DS_Store
 .vscode/
 .idea/
+Thumbs.db
+*.log
