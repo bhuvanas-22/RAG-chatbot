@@ -1,0 +1,35 @@
+# Dependencies
+**/node_modules/
+**/.venv/
+**/venv/
+**/env/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Git & IDE metadata
+.git/
+.gitignore
+.github/
+.vscode/
+.idea/
+
+# Python cache & compiled bytecode
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+*.so
+
+# Local runtime data & caches (prevents bloating the image or copying local test documents)
+backend/chroma_db/
+backend/document_store/
+chroma_db/
+document_store/
+static/
+
+# Documentation & logs
+*.log
+npm-debug.log*
+yarn-debug.log*

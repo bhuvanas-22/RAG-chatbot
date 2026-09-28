@@ -700,6 +700,11 @@ def get_parsed_document(doc_name: str) -> Optional[Dict[str, Any]]:
 
 # API Endpoints
 
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint for Docker container probes and load balancers."""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
 @app.get("/api/check-key")
 def check_key():
     """Checks if a Gemini API Key is configured and returns available models."""

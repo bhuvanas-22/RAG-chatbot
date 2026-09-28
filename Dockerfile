@@ -31,12 +31,17 @@ RUN npm run build
 # Use lightweight official Python runtime
 FROM python:3.11-slim
 
+# Prevent Python from writing .pyc files and enable real-time unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
 # Set root application directory
 WORKDIR /app
 
-# Install minimal build tools needed for C-extensions (e.g. ChromaDB)
+# Install minimal build tools needed for C-extensions (e.g. ChromaDB) and curl for healthchecks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy root Python dependencies file
@@ -53,15 +58,22 @@ COPY sample_docs/ ./sample_docs/
 # Copy compiled frontend assets from STAGE 1 into /app/static
 COPY --from=frontend-builder /app/static ./static/
 
+# Pre-create writable directories for ChromaDB and document store
+RUN mkdir -p /app/backend/chroma_db /app/backend/document_store
+
 # ------------------------------------------------------------------------------
 # Runtime Configuration & Port Binding
 # ------------------------------------------------------------------------------
-# Cloud platforms (Render, Railway, Heroku) inject the PORT environment variable
+# Cloud platforms (Render, Railway, Heroku, Cloud Run) inject the PORT environment variable
 ENV PORT=8000
 ENV HOST=0.0.0.0
 
 # Document exposed container port
 EXPOSE 8000
+
+# Container health check (verifies backend is alive and responding)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
 
 # Start FastAPI backend with single-port static frontend serving
 CMD ["python", "run.py"]
