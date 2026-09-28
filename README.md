@@ -1,4 +1,4 @@
-# Atlas RAG — AI Document Intelligence & Chatbot
+ # Atlas RAG — AI Document Intelligence & Chatbot
 
 An enterprise-grade **Retrieval-Augmented Generation (RAG)** chatbot built with a **Python FastAPI** backend, **ChromaDB** vector database, **Google Gemini 3.8**, and a modern **React 19 + TypeScript + Vite** glassmorphic frontend.
 

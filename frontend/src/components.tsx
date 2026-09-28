@@ -22,17 +22,22 @@ const getFileIcon = (name: string) => {
   return <File className="file-icon-general" size={16} />
 }
 
-export function Brand({ onMenu }: { onMenu: () => void }) {
+export function Brand({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   return (
     <div className="brand">
-      <button className="icon-button mobile-menu" onClick={onMenu} aria-label="Open navigation">
+      <button
+        className="icon-button sidebar-toggle-btn"
+        onClick={onToggleSidebar}
+        aria-label="Collapse sidebar"
+        title="Collapse sidebar (Ctrl+B)"
+      >
         <Menu size={18} />
       </button>
       <div className="brand-badge">
         <Sparkles size={16} />
       </div>
       <div className="brand-text">
-        <strong>Atlas RAG</strong>
+        <strong>RAG - Chatbot</strong>
         <span>Intelligence Engine</span>
       </div>
     </div>
@@ -41,7 +46,9 @@ export function Brand({ onMenu }: { onMenu: () => void }) {
 
 export function Sidebar({
   open,
+  collapsed = false,
   onClose,
+  onToggleCollapse,
   documents,
   included,
   onToggle,
@@ -59,7 +66,9 @@ export function Sidebar({
   onPreviewDocument,
 }: {
   open: boolean
+  collapsed?: boolean
   onClose: () => void
+  onToggleCollapse?: () => void
   documents: DocumentItem[]
   included: Record<string, boolean>
   onToggle: (name: string) => void
@@ -78,10 +87,18 @@ export function Sidebar({
 }) {
   const [activeTab, setActiveTab] = useState<'chats' | 'docs'>('docs')
 
+  const handleToggle = () => {
+    if (window.innerWidth <= 768) {
+      onClose()
+    } else {
+      onToggleCollapse?.()
+    }
+  }
+
   return (
-    <aside className={`sidebar ${open ? 'open' : ''}`}>
+    <aside className={`sidebar ${open ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-top">
-        <Brand onMenu={onClose} />
+        <Brand onToggleSidebar={handleToggle} />
         <button className="icon-button close-mobile" onClick={onClose} aria-label="Close navigation">
           <X size={17} />
         </button>
@@ -434,7 +451,7 @@ function MessageBubble({
       <div className="message-body">
         <div className="message-topline">
           <div className="topline-sender">
-            <span>{message.role === 'assistant' ? 'Atlas AI' : 'You'}</span>
+            <span>{message.role === 'assistant' ? 'RAG - Chatbot' : 'You'}</span>
             {message.status === 'streaming' && (
               <span className="streaming-badge">
                 <LoaderCircle size={11} className="spin" /> Generating...

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Atlas RAG - Design System & Modern Aesthetics
+   RAG - Chatbot - Design System & Modern Aesthetics
    ========================================================================== */
 
 :root {
@@ -123,7 +123,18 @@ body {
   border-right: 1px solid var(--border);
   padding: 16px 14px 12px;
   z-index: 20;
-  transition: transform 0.25s ease;
+  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s ease, opacity 0.2s ease, visibility 0.28s ease;
+}
+
+.sidebar.collapsed {
+  margin-left: -290px;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.sidebar-toggle-btn {
+  flex-shrink: 0;
 }
 
 .sidebar-top {
@@ -542,6 +553,14 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.topbar .sidebar-toggle-btn {
+  display: none;
+}
+
+.topbar .sidebar-toggle-btn.visible {
+  display: inline-grid;
 }
 
 .topbar-session-title h2 {
@@ -1829,8 +1848,12 @@ mark.search-hit.current {
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
+    margin-left: 0 !important;
     transform: translateX(-100%);
     box-shadow: 16px 0 32px rgba(0, 0, 0, 0.3);
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
   }
 
   .sidebar.open {
@@ -1846,7 +1869,7 @@ mark.search-hit.current {
     border: 0;
   }
 
-  .mobile-menu, .close-mobile {
+  .topbar .sidebar-toggle-btn, .close-mobile {
     display: inline-grid !important;
   }
 

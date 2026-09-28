@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
-  AlertCircle, Download, PanelLeft, Sparkles, Trash2
+  AlertCircle, Download, Menu, Sparkles, Trash2
 } from 'lucide-react'
 import {
   ApiError, chatStream, checkKey, clearDocuments, deleteDocument,
@@ -44,7 +44,7 @@ function App() {
   // Multi-session chat management
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
     try {
-      const saved = localStorage.getItem('atlas_sessions')
+      const saved = localStorage.getItem('rag_sessions') || localStorage.getItem('atlas_sessions')
       if (saved) {
         const parsed = JSON.parse(saved) as ChatSession[]
         if (parsed.length > 0) return parsed
@@ -72,6 +72,9 @@ function App() {
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark')
   const [mobileSidebar, setMobileSidebar] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true'
+  })
   const [loadError, setLoadError] = useState('')
 
   // Document Inspector Drawer state
@@ -95,19 +98,23 @@ function App() {
   }, [included])
 
   useEffect(() => {
-    localStorage.setItem('atlas_sessions', JSON.stringify(sessions))
+    localStorage.setItem('rag_sessions', JSON.stringify(sessions))
   }, [sessions])
 
   useEffect(() => {
     void refresh()
   }, [])
 
-  // Keyboard shortcut Ctrl+K / Cmd+K for new chat
+  // Keyboard shortcuts: Ctrl+K for new chat, Ctrl+B to toggle sidebar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         startNewSession()
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        toggleSidebar()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -135,6 +142,14 @@ function App() {
     setSessions((prev) =>
       prev.map((s) => (s.id === currentSession.id ? updater(s) : s))
     )
+  }
+
+  function toggleSidebar() {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      localStorage.setItem('sidebar_collapsed', String(next))
+      return next
+    })
   }
 
   function startNewSession() {
@@ -451,9 +466,9 @@ function App() {
 
   function exportChat() {
     if (messages.length === 0) return
-    let md = `# ${currentSession.title}\n*Exported from Atlas RAG on ${new Date().toLocaleString()}*\n\n---\n\n`
+    let md = `# ${currentSession.title}\n*Exported from RAG - Chatbot on ${new Date().toLocaleString()}*\n\n---\n\n`
     for (const m of messages) {
-      md += `### ${m.role === 'user' ? 'User' : 'Atlas AI'}\n\n${m.content}\n\n`
+      md += `### ${m.role === 'user' ? 'User' : 'RAG - Chatbot'}\n\n${m.content}\n\n`
       if (m.sources && m.sources.length > 0) {
         md += `**Sources cited:**\n`
         m.sources.forEach((s, idx) => {
@@ -475,7 +490,9 @@ function App() {
     <div className="app-shell">
       <Sidebar
         open={mobileSidebar}
+        collapsed={sidebarCollapsed}
         onClose={() => setMobileSidebar(false)}
+        onToggleCollapse={toggleSidebar}
         documents={documents}
         included={included}
         onToggle={toggleDocument}
@@ -508,11 +525,18 @@ function App() {
         <header className="topbar">
           <div className="topbar-left">
             <button
-              className="icon-button mobile-menu"
-              onClick={() => setMobileSidebar(true)}
-              aria-label="Open navigation"
+              className={`icon-button sidebar-toggle-btn ${sidebarCollapsed ? 'visible' : ''}`}
+              onClick={() => {
+                if (window.innerWidth <= 768) {
+                  setMobileSidebar(true)
+                } else {
+                  setSidebarCollapsed(false)
+                }
+              }}
+              title={sidebarCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Open navigation'}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Open navigation'}
             >
-              <PanelLeft size={18} />
+              <Menu size={18} />
             </button>
             <div className="topbar-session-title">
               <div className="title-row">

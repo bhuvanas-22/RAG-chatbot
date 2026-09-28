@@ -39,7 +39,7 @@ load_dotenv()
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-app = FastAPI(title="Atlas RAG Chatbot Backend", version="2.0.0")
+app = FastAPI(title="RAG - Chatbot Backend", version="2.0.0")
 
 # Runtime configuration
 DEFAULT_ALLOWED_ORIGINS = "http://127.0.0.1:8000,http://localhost:8000,http://localhost:5173,http://127.0.0.1:5173"
@@ -568,7 +568,7 @@ def build_system_prompt(persona: str, context_str: str) -> str:
     style_guide = persona_instructions.get(persona.lower(), persona_instructions["standard"])
 
     return (
-        f"You are Atlas, an intelligent and grounded RAG AI Assistant.\n"
+        f"You are RAG - Chatbot, an intelligent and grounded RAG AI Assistant.\n"
         f"Style Directive: {style_guide}\n\n"
         "CORE RULES:\n"
         "1. Base your answer ONLY on the provided Context below.\n"
