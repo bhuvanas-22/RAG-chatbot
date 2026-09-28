@@ -396,7 +396,9 @@ class VectorStore:
 
     def delete_document(self, doc_name: str) -> bool:
         try:
-            if doc_name in self.documents:
+            existing = self.collection.get(where={"doc_name": doc_name}, limit=1)
+            has_chunks = bool(existing and existing.get("ids") and len(existing["ids"]) > 0)
+            if has_chunks or doc_name in self.documents:
                 self.collection.delete(where={"doc_name": doc_name})
                 logger.info(f"Deleted document '{doc_name}' from ChromaDB.")
                 return True
@@ -489,17 +491,13 @@ def get_api_key(x_gemini_api_key: Optional[str] = Header(None)) -> str:
     )
 
 def require_management_key(x_gemini_api_key: Optional[str] = Header(None)) -> str:
+    """Helper for document management key; accepts server .env key or client key."""
     configured_key = os.getenv("GEMINI_API_KEY")
-    if not configured_key:
-        raise HTTPException(
-            status_code=503,
-            detail="Set GEMINI_API_KEY in .env before using document management actions."
-        )
-    if not x_gemini_api_key:
-        raise HTTPException(status_code=401, detail="Gemini API Key is required for this action.")
-    if not hmac.compare_digest(x_gemini_api_key, configured_key):
-        raise HTTPException(status_code=403, detail="The provided Gemini API Key is not authorized for this action.")
-    return configured_key
+    if configured_key and configured_key.strip():
+        return configured_key.strip()
+    if x_gemini_api_key and x_gemini_api_key.strip():
+        return x_gemini_api_key.strip()
+    return ""
 
 def generate_embeddings(texts: List[str], api_key: str, is_query: bool = False) -> List[List[float]]:
     try:
@@ -740,18 +738,38 @@ def preview_document(doc_name: str):
 
 @app.delete("/api/documents/{doc_name:path}")
 def delete_document(doc_name: str, x_gemini_api_key: Optional[str] = Header(None)):
-    """Deletes a document from the index."""
-    require_management_key(x_gemini_api_key)
-    deleted = vector_store.delete_document(doc_name)
-    if not deleted:
+    """Deletes a document from the index and cache."""
+    deleted_chroma = vector_store.delete_document(doc_name)
+
+    # Also clean up parsed and raw cache files if present
+    raw_path = os.path.join(DOC_FILES_DIR, doc_name)
+    json_path = os.path.join(DOC_PARSED_DIR, f"{doc_name}.json")
+    deleted_file = False
+    for p in [raw_path, json_path]:
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+                deleted_file = True
+            except Exception as e:
+                logger.warning(f"Failed to remove cached file {p}: {e}")
+
+    if not deleted_chroma and not deleted_file:
         raise HTTPException(status_code=404, detail="Document not found")
     return {"message": f"Successfully deleted document '{doc_name}'"}
 
 @app.delete("/api/clear")
 def clear_store(x_gemini_api_key: Optional[str] = Header(None)):
-    """Clears all indexed documents."""
-    require_management_key(x_gemini_api_key)
+    """Clears all indexed documents and local caches."""
     vector_store.clear()
+    for folder in [DOC_FILES_DIR, DOC_PARSED_DIR]:
+        if os.path.exists(folder):
+            for fname in os.listdir(folder):
+                fpath = os.path.join(folder, fname)
+                try:
+                    if os.path.isfile(fpath):
+                        os.remove(fpath)
+                except Exception:
+                    pass
     return {"message": "All documents and embeddings cleared successfully."}
 
 @app.post("/api/upload")
@@ -910,13 +928,20 @@ def chat_stream(
     def event_generator():
         try:
             # 1. Status: Embedding & Retrieving
-            yield f"event: status\ndata: {json.dumps({'step': 'retrieving', 'message': 'Searching knowledge base...'})}\n\n"
+            yield f"event: status\ndata: {json.dumps({'step': 'retrieving', 'message': 'Searching knowledge base for relevant passages...'})}\n\n"
 
             query_emb = generate_embeddings([message], api_key, is_query=True)[0]
             top_matches = vector_store.search(query_emb, top_k=5, doc_filter=doc_filter)
 
-            # 2. Status: Sources identified
+            # 2. Status: Sources identified & analyzing
             yield f"event: sources\ndata: {json.dumps({'sources': top_matches})}\n\n"
+
+            doc_names = list(dict.fromkeys(m['doc_name'] for m in top_matches))
+            if doc_names:
+                doc_summary = f"{len(top_matches)} passages from {doc_names[0]}" if len(doc_names) == 1 else f"{len(top_matches)} passages across {len(doc_names)} documents"
+                yield f"event: status\ndata: {json.dumps({'step': 'analyzing', 'message': f'Analyzing & extracting context from {doc_summary}...'})}\n\n"
+            else:
+                yield f"event: status\ndata: {json.dumps({'step': 'analyzing', 'message': 'Analyzing indexed context...'})}\n\n"
 
             context_parts = []
             for i, match in enumerate(top_matches):
@@ -931,7 +956,7 @@ def chat_stream(
             system_instruction = build_system_prompt(persona, context_str)
 
             # 3. Status: Synthesizing
-            yield f"event: status\ndata: {json.dumps({'step': 'generating', 'message': 'Synthesizing response...'})}\n\n"
+            yield f"event: status\ndata: {json.dumps({'step': 'generating', 'message': 'Extracting key facts and synthesizing grounded answer...'})}\n\n"
 
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel(

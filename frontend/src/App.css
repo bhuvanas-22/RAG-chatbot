@@ -976,186 +976,346 @@ body {
   border: 1px solid var(--danger);
 }
 
-/* Citations Container */
-.citations-container {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+/* ==========================================================================
+   Modern AI Thought Process & Knowledge Extraction
+   ========================================================================== */
+
+.thought-container {
+  margin-bottom: 12px;
 }
 
-.citation-header {
+/* Streaming Active Thought Card */
+.thought-streaming-card {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+  animation: pulseThought 2s infinite alternate;
+}
+
+@keyframes pulseThought {
+  0% { box-shadow: 0 0 8px var(--accent-glow); }
+  100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.25); }
+}
+
+.thought-stream-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
 }
 
-.citation-tag {
+.thought-stream-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.live-pulse-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--accent-light);
+  color: var(--accent);
+  animation: pulse 1.2s infinite;
+}
+
+.thought-stream-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stream-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.step-bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stream-step.current .step-bullet {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 0.8s infinite;
+}
+
+.stream-step.current .step-text {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.stream-step.completed .step-bullet {
+  background: var(--success);
+}
+
+.stream-step.completed .step-text {
+  color: var(--text-muted);
+}
+
+.stream-step.waiting .step-bullet {
+  background: var(--border-strong);
+}
+
+.stream-step.waiting .step-text {
+  color: var(--text-faint);
+}
+
+/* Collapsible Thought Accordion */
+.thought-accordion {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.thought-accordion:hover {
+  border-color: var(--border-strong);
+}
+
+.thought-accordion-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.thought-accordion-btn:hover {
+  background: var(--bg-hover);
+}
+
+.thought-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.thought-btn-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thought-btn-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.thought-verified-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.thought-accordion-body {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-sidebar);
+}
+
+/* 3-Step Pipeline Flow */
+.thought-pipeline-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 640px) {
+  .thought-pipeline-flow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pipeline-step {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.pipeline-step-head {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  margin-bottom: 4px;
 }
 
-.citation-toggle-link {
+.pipeline-step-head strong {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.pipeline-step p {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Extracted Passages List */
+.thought-passages-list {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.passages-list-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.thought-passage-card {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.passage-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.passage-doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.passage-index {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.passage-doc-meta strong {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passage-match-score {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--success-light);
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.passage-quote-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.passage-inspect-action {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
   background: transparent;
   border: 0;
   color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.chevron-rot {
-  transition: transform 0.2s ease;
-}
-
-.chevron-rot.open {
-  transform: rotate(180deg);
-}
-
-.citation-chips-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.citation-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 8px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.citation-chip:hover {
-  border-color: var(--accent);
-  background: var(--accent-light);
-}
-
-.chip-num {
   font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
 }
 
-.chip-name {
+.passage-inspect-action:hover {
+  text-decoration: underline;
+}
+
+/* Grounded Sources Clean Footer */
+.grounded-sources-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border);
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-main);
-  max-width: 140px;
+}
+
+.grounded-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chip-score {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--success);
-  background: var(--success-light);
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-/* Expanded Source Detail Cards */
-.source-cards-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.source-detail-card {
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-card-subtle);
-  border: 1px solid var(--border);
-}
-
-.source-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.source-title-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.source-idx {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.source-title-meta strong {
-  font-size: 12px;
+.grounded-footer-info strong {
   color: var(--text-main);
 }
 
-.badge-page {
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: var(--accent-light);
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.badge-section {
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: var(--bg-hover);
-  color: var(--text-muted);
-}
-
-.source-score-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--success);
-}
-
-.source-excerpt {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.45;
-  border-left: 2px solid var(--accent);
-  padding-left: 8px;
-  margin-bottom: 8px;
-  font-style: italic;
-}
-
-.source-inspect-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.grounded-toggle-btn {
   background: transparent;
   border: 0;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.source-inspect-link:hover {
+.grounded-toggle-btn:hover {
   text-decoration: underline;
+}
+
+.spin-slow {
+  animation: spin 3s linear infinite;
 }
 
 /* Follow-up suggestions */
@@ -1296,6 +1456,13 @@ body {
 .composer-box:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-md);
+}
+
+.composer-box.drag-over {
+  border-color: var(--accent) !important;
+  background: var(--accent-light) !important;
+  box-shadow: 0 0 0 4px var(--accent-glow), var(--shadow-lg) !important;
+  transform: scale(1.006);
 }
 
 .composer-box textarea {
@@ -1889,3 +2056,95 @@ mark.search-hit.current {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Drag & Drop File Upload Overlay
+   ========================================================================== */
+
+.file-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.76);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  animation: fadeIn 0.15s ease-out;
+}
+
+[data-theme='light'] .file-drop-overlay {
+  background: rgba(248, 250, 252, 0.88);
+}
+
+.file-drop-card {
+  width: min(500px, 90%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 38px 32px;
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--accent);
+  background: var(--bg-card);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), 0 0 40px var(--accent-glow);
+  animation: dropCardBounce 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dropCardBounce {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.file-drop-icon-glow {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 18px;
+  box-shadow: 0 0 28px var(--accent-glow);
+  animation: pulseGlow 1.8s infinite alternate ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0% { transform: translateY(0); box-shadow: 0 0 16px var(--accent-glow); }
+  100% { transform: translateY(-5px); box-shadow: 0 0 36px var(--accent-glow); }
+}
+
+.file-drop-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.file-drop-card p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.drop-pill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.drop-pill-tags span {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+

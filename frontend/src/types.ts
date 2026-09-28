@@ -27,6 +27,7 @@ export type Message = {
   follow_ups?: string[]
   status?: 'ready' | 'error' | 'streaming'
   searchStep?: string
+  searchStage?: 'retrieving' | 'analyzing' | 'generating' | 'done'
   timestamp?: string
 }
 

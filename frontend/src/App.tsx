@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
-  AlertCircle, Download, Menu, Sparkles, Trash2
+  AlertCircle, Download, Menu, Sparkles, Trash2, UploadCloud
 } from 'lucide-react'
 import {
   ApiError, chatStream, checkKey, clearDocuments, deleteDocument,
@@ -104,6 +104,61 @@ function App() {
   useEffect(() => {
     void refresh()
   }, [])
+
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
+  const dragCounter = useRef(0)
+
+  // Prevent browser from navigating away if files are dropped outside
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      if (e.dataTransfer?.types && Array.from(e.dataTransfer.types).includes('Files')) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('dragover', preventDefaults)
+    window.addEventListener('drop', preventDefaults)
+    return () => {
+      window.removeEventListener('dragover', preventDefaults)
+      window.removeEventListener('drop', preventDefaults)
+    }
+  }, [])
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+      dragCounter.current += 1
+      setIsDraggingFile(true)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+      e.dataTransfer.dropEffect = 'copy'
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounter.current -= 1
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0
+      setIsDraggingFile(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounter.current = 0
+    setIsDraggingFile(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      void handleFiles(Array.from(e.dataTransfer.files))
+    }
+  }
 
   // Keyboard shortcuts: Ctrl+K for new chat, Ctrl+B to toggle sidebar
   useEffect(() => {
@@ -350,11 +405,13 @@ function App() {
         historyPayload,
         apiKey,
         {
-          onStatus: (_step, statusMsg) => {
+          onStatus: (step, statusMsg) => {
             updateCurrentSession((s) => ({
               ...s,
               messages: s.messages.map((m) =>
-                m.id === assistantMsgId ? { ...m, searchStep: statusMsg } : m
+                m.id === assistantMsgId
+                  ? { ...m, searchStep: statusMsg, searchStage: step as any }
+                  : m
               ),
             }))
           },
@@ -395,6 +452,7 @@ function App() {
                       sources: finalSources || collectedSources,
                       status: 'ready',
                       searchStep: undefined,
+                      searchStage: 'done',
                     }
                   : m
               ),
@@ -487,7 +545,13 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell ${isDraggingFile ? 'file-dragging' : ''}`}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <Sidebar
         open={mobileSidebar}
         collapsed={sidebarCollapsed}
@@ -585,6 +649,26 @@ function App() {
           </div>
         )}
 
+        {isDraggingFile && (
+          <div className="file-drop-overlay">
+            <div className="file-drop-card">
+              <div className="file-drop-icon-glow">
+                <UploadCloud size={42} className="drop-icon" />
+              </div>
+              <h3>Drop files to upload</h3>
+              <p>Add PDF, Word (.docx), CSV, TXT, MD, or Code into your knowledge base</p>
+              <div className="drop-pill-tags">
+                <span>PDF</span>
+                <span>DOCX</span>
+                <span>CSV</span>
+                <span>TXT</span>
+                <span>Code</span>
+                <span>Max 25MB</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <ChatWindow
           messages={messages}
           documentsReady={canChat}
@@ -607,6 +691,7 @@ function App() {
           uploads={uploads}
           persona={persona}
           onPersonaChange={setPersona}
+          isDragging={isDraggingFile}
         />
       </main>
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
 import {
-  AlertCircle, Archive, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronUp,
+  AlertCircle, Archive, BookOpen, Brain, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronUp,
   Copy, Database, ExternalLink, Eye, EyeOff, File, FileCode2,
   FileSpreadsheet, FileText, KeyRound, LoaderCircle, Menu, Mic, MicOff,
   Moon, Paperclip, Plus, RefreshCw, Search, Send, Settings, ShieldCheck,
@@ -442,6 +442,22 @@ function MessageBubble({
     }
   }
 
+  const docNames = useMemo(() => {
+    if (!message.sources || message.sources.length === 0) return []
+    return Array.from(new Set(message.sources.map((s) => s.doc_name)))
+  }, [message.sources])
+
+  const docNamesSummary = useMemo(() => {
+    if (docNames.length === 0) return 'documents'
+    if (docNames.length === 1) return docNames[0]
+    return `${docNames[0]} and ${docNames.length - 1} other${docNames.length > 2 ? 's' : ''}`
+  }, [docNames])
+
+  const highestScore = useMemo(() => {
+    if (!message.sources || message.sources.length === 0) return 0
+    return Math.round(Math.max(...message.sources.map((s) => s.score)) * 100)
+  }, [message.sources])
+
   return (
     <article className={`message message-${message.role}`}>
       <div className="avatar">
@@ -490,11 +506,115 @@ function MessageBubble({
           </div>
         </div>
 
-        {/* Step Reasoning / Retrieval progress indicator */}
-        {message.searchStep && message.status === 'streaming' && (
-          <div className="search-step-pill">
-            <Search size={12} className="spin" />
-            <span>{message.searchStep}</span>
+        {/* Modern AI Reasoning & Knowledge Extraction Component */}
+        {message.role === 'assistant' && (message.status === 'streaming' || (message.sources && message.sources.length > 0)) && (
+          <div className={`thought-container ${message.status === 'streaming' ? 'is-streaming' : 'is-ready'}`}>
+            {message.status === 'streaming' ? (
+              <div className="thought-streaming-card">
+                <div className="thought-stream-header">
+                  <div className="thought-stream-title">
+                    <Brain size={15} className="spin-slow text-accent" />
+                    <span>Thinking & Extracting Knowledge...</span>
+                  </div>
+                  <span className="live-pulse-badge">Live Analysis</span>
+                </div>
+                <div className="thought-stream-steps">
+                  <div className={`stream-step ${message.searchStage === 'retrieving' ? 'current' : 'completed'}`}>
+                    <span className="step-bullet" />
+                    <span className="step-text">Searching indexed documents for conceptual matches...</span>
+                  </div>
+                  <div className={`stream-step ${message.searchStage === 'analyzing' ? 'current' : message.searchStage === 'generating' || message.searchStage === 'done' ? 'completed' : 'waiting'}`}>
+                    <span className="step-bullet" />
+                    <span className="step-text">
+                      {message.sources && message.sources.length > 0
+                        ? `Analyzed ${message.sources.length} relevant excerpts from ${docNamesSummary}`
+                        : 'Analyzing & scoring relevance across passages...'}
+                    </span>
+                  </div>
+                  <div className={`stream-step ${message.searchStage === 'generating' ? 'current' : message.searchStage === 'done' ? 'completed' : 'waiting'}`}>
+                    <span className="step-bullet" />
+                    <span className="step-text">Extracting verified facts and synthesizing grounded answer...</span>
+                  </div>
+                </div>
+              </div>
+            ) : message.sources && message.sources.length > 0 ? (
+              <div className="thought-accordion">
+                <button
+                  type="button"
+                  className="thought-accordion-btn"
+                  onClick={() => setShowSources((prev) => !prev)}
+                  aria-expanded={showSources}
+                >
+                  <div className="thought-btn-left">
+                    <Brain size={14} className="text-accent" />
+                    <span className="thought-btn-title">
+                      Thought Process · Analyzed {message.sources.length} excerpt{message.sources.length > 1 ? 's' : ''} from {docNamesSummary}
+                    </span>
+                  </div>
+                  <div className="thought-btn-right">
+                    <span className="thought-verified-badge">{highestScore}% relevance</span>
+                    <ChevronDown size={14} className={`chevron-rot ${showSources ? 'open' : ''}`} />
+                  </div>
+                </button>
+
+                {showSources && (
+                  <div className="thought-accordion-body">
+                    <div className="thought-pipeline-flow">
+                      <div className="pipeline-step">
+                        <div className="pipeline-step-head">
+                          <Search size={13} className="text-accent" />
+                          <strong>1. Knowledge Search</strong>
+                        </div>
+                        <p>Scanned ChromaDB vector store and retrieved top {message.sources.length} candidates</p>
+                      </div>
+                      <div className="pipeline-step">
+                        <div className="pipeline-step-head">
+                          <Layers size={13} className="text-accent" />
+                          <strong>2. Passage Analysis</strong>
+                        </div>
+                        <p>Ranked passages with match scores up to {highestScore}% in {docNamesSummary}</p>
+                      </div>
+                      <div className="pipeline-step">
+                        <div className="pipeline-step-head">
+                          <Sparkles size={13} className="text-accent" />
+                          <strong>3. Grounded Extraction</strong>
+                        </div>
+                        <p>Extracted verified context to formulate accurate, hallucination-free response</p>
+                      </div>
+                    </div>
+
+                    <div className="thought-passages-list">
+                      <div className="passages-list-title">Extracted Grounding Context ({message.sources.length})</div>
+                      {message.sources.map((src, sIdx) => {
+                        const pageLabel = src.page_number && src.page_number > 1 ? ` · Page ${src.page_number}` : ''
+                        return (
+                          <div className="thought-passage-card" key={`src-${sIdx}`}>
+                            <div className="passage-card-top">
+                              <div className="passage-doc-meta">
+                                <span className="passage-index">[{sIdx + 1}]</span>
+                                <strong title={src.doc_name}>{src.doc_name}</strong>
+                                {pageLabel && <span className="badge-page">{pageLabel}</span>}
+                              </div>
+                              <span className="passage-match-score">{Math.round(src.score * 100)}% Match</span>
+                            </div>
+                            <blockquote className="passage-quote-text">
+                              "{src.text.length > 250 ? src.text.slice(0, 250) + '...' : src.text}"
+                            </blockquote>
+                            <button
+                              type="button"
+                              className="passage-inspect-action"
+                              onClick={() => onInspectSource(src)}
+                            >
+                              <ExternalLink size={11} /> Inspect in Document Viewer
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -503,72 +623,20 @@ function MessageBubble({
           {message.status === 'streaming' && <span className="streaming-caret" />}
         </div>
 
-        {/* Interactive Citations Bar */}
-        {message.sources && message.sources.length > 0 && (
-          <div className="citations-container">
-            <div className="citation-header">
-              <span className="citation-tag">
-                <Layers size={12} /> {message.sources.length} Grounded Source{message.sources.length > 1 ? 's' : ''}
-              </span>
-              <button
-                className="citation-toggle-link"
-                onClick={() => setShowSources((prev) => !prev)}
-              >
-                {showSources ? 'Hide Details' : 'View Passages'}
-                <ChevronDown size={13} className={`chevron-rot ${showSources ? 'open' : ''}`} />
-              </button>
+        {/* Clean Grounded Sources Footer */}
+        {message.role === 'assistant' && message.sources && message.sources.length > 0 && message.status !== 'streaming' && (
+          <div className="grounded-sources-footer">
+            <div className="grounded-footer-info">
+              <BookOpen size={13} className="text-accent" />
+              <span>Grounded in <strong>{docNamesSummary}</strong> ({message.sources.length} passage{message.sources.length > 1 ? 's' : ''} extracted)</span>
             </div>
-
-            <div className="citation-chips-row">
-              {message.sources.map((src, sIdx) => {
-                const pageLabel = src.page_number && src.page_number > 1 ? ` · p.${src.page_number}` : ''
-                return (
-                  <button
-                    key={`${src.doc_name}-${sIdx}`}
-                    className="citation-chip"
-                    onClick={() => onInspectSource(src)}
-                    title={`Click to view context from ${src.doc_name}`}
-                  >
-                    <span className="chip-num">[{sIdx + 1}]</span>
-                    <span className="chip-name">{src.doc_name}{pageLabel}</span>
-                    <span className="chip-score">{Math.round(src.score * 100)}%</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {showSources && (
-              <div className="source-cards-panel">
-                {message.sources.map((src, sIdx) => (
-                  <div className="source-detail-card" key={`detail-${sIdx}`}>
-                    <div className="source-card-head">
-                      <div className="source-title-meta">
-                        <span className="source-idx">[{sIdx + 1}]</span>
-                        <strong>{src.doc_name}</strong>
-                        {src.page_number && src.page_number > 1 && (
-                          <span className="badge-page">Page {src.page_number}</span>
-                        )}
-                        {src.section && src.section !== `Page ${src.page_number}` && (
-                          <span className="badge-section">{src.section}</span>
-                        )}
-                      </div>
-                      <span className="source-score-badge">
-                        {Math.round(src.score * 100)}% match
-                      </span>
-                    </div>
-                    <blockquote className="source-excerpt">
-                      "{src.text}"
-                    </blockquote>
-                    <button
-                      className="source-inspect-link"
-                      onClick={() => onInspectSource(src)}
-                    >
-                      <ExternalLink size={12} /> Inspect in Document Viewer
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <button
+              type="button"
+              className="grounded-toggle-btn"
+              onClick={() => setShowSources((prev) => !prev)}
+            >
+              {showSources ? 'Hide analysis' : 'View analysis & passages'}
+            </button>
           </div>
         )}
 
@@ -610,6 +678,7 @@ export function Composer({
   uploads,
   persona,
   onPersonaChange,
+  isDragging = false,
 }: {
   value: string
   onChange: (value: string) => void
@@ -623,10 +692,50 @@ export function Composer({
   uploads: UploadItem[]
   persona: Persona
   onPersonaChange: (p: Persona) => void
+  isDragging?: boolean
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [listening, setListening] = useState(false)
+  const [boxDragOver, setBoxDragOver] = useState(false)
+  const boxDragCounter = useRef(0)
+
+  const handleBoxDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+      boxDragCounter.current += 1
+      setBoxDragOver(true)
+    }
+  }
+
+  const handleBoxDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+      e.dataTransfer.dropEffect = 'copy'
+    }
+  }
+
+  const handleBoxDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    boxDragCounter.current -= 1
+    if (boxDragCounter.current <= 0) {
+      boxDragCounter.current = 0
+      setBoxDragOver(false)
+    }
+  }
+
+  const handleBoxDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    boxDragCounter.current = 0
+    setBoxDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFiles(Array.from(e.dataTransfer.files))
+    }
+  }
 
   // Speech to text support
   const toggleListening = () => {
@@ -701,7 +810,14 @@ export function Composer({
         </div>
       </div>
 
-      <form className="composer-box" onSubmit={onSubmit}>
+      <form
+        className={`composer-box ${boxDragOver || isDragging ? 'drag-over' : ''}`}
+        onSubmit={onSubmit}
+        onDragEnter={handleBoxDragEnter}
+        onDragOver={handleBoxDragOver}
+        onDragLeave={handleBoxDragLeave}
+        onDrop={handleBoxDrop}
+      >
         <input
           ref={fileInputRef}
           className="visually-hidden"
@@ -718,7 +834,7 @@ export function Composer({
         <button
           className="composer-btn"
           type="button"
-          title={canUpload ? 'Upload PDF, DOCX, CSV, TXT' : 'Add API key first'}
+          title={canUpload ? 'Upload or drag & drop files (PDF, DOCX, CSV, TXT, MD, Code)' : 'Add API key first'}
           disabled={!canUpload}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -731,9 +847,11 @@ export function Composer({
           rows={1}
           maxLength={3000}
           placeholder={
-            documentsReady
+            boxDragOver || isDragging
+              ? 'Drop files here to upload to knowledge base...'
+              : documentsReady
               ? 'Ask anything grounded in your documents...'
-              : 'Upload a document above or configure API key...'
+              : 'Upload or drop documents to begin...'
           }
           disabled={disabled || generating}
           onChange={(e) => onChange(e.target.value)}

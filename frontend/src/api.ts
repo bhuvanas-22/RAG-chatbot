@@ -25,10 +25,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export function authHeaders(apiKey: string, json = false): HeadersInit {
+export function authHeaders(apiKey?: string, json = false): HeadersInit {
   const headers: Record<string, string> = {}
   if (json) headers['Content-Type'] = 'application/json'
-  if (apiKey) headers['x-gemini-api-key'] = apiKey
+  const key = (apiKey && apiKey.trim()) || localStorage.getItem('gemini_api_key') || ''
+  if (key) headers['x-gemini-api-key'] = key
   return headers
 }
 
@@ -44,7 +45,7 @@ export function previewDocument(name: string) {
   return request<DocumentPreviewData>(`/api/documents/${encodeURIComponent(name)}/preview`)
 }
 
-export function uploadDocument(file: File, apiKey: string) {
+export function uploadDocument(file: File, apiKey?: string) {
   const body = new FormData()
   body.append('files', file)
   return request<{ files: Array<{ filename: string; chunks: number; pages: number; type: string }> }>('/api/upload', {
@@ -54,14 +55,14 @@ export function uploadDocument(file: File, apiKey: string) {
   })
 }
 
-export function deleteDocument(name: string, apiKey: string) {
+export function deleteDocument(name: string, apiKey?: string) {
   return request(`/api/documents/${encodeURIComponent(name)}`, {
     method: 'DELETE',
     headers: authHeaders(apiKey),
   })
 }
 
-export function clearDocuments(apiKey: string) {
+export function clearDocuments(apiKey?: string) {
   return request('/api/clear', {
     method: 'DELETE',
     headers: authHeaders(apiKey),
